@@ -54,7 +54,10 @@ func main() {
 	rV1.Get("/err", handlerError)
 
 	rV1.Post("/users", apiCfg.handlerCreateUser)
-	rV1.Get("/users", apiCfg.handlerGetUser)
+	rV1.Get("/users", apiCfg.middlewareAuth(apiCfg.handlerGetUser))
+
+	rV1.Post("/feeds", apiCfg.middlewareAuth(apiCfg.handlerCreateFeed))
+	rV1.Get("/feeds", apiCfg.handlerGetFeeds)
 
 	srv := &http.Server{
 		Addr:    ":" + port,
