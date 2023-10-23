@@ -59,6 +59,10 @@ func main() {
 	rV1.Post("/feeds", apiCfg.middlewareAuth(apiCfg.handlerCreateFeed))
 	rV1.Get("/feeds", apiCfg.handlerGetFeeds)
 
+	rV1.Post("/feed_follows", apiCfg.middlewareAuth(apiCfg.handlerFeedFollow))
+	rV1.Get("/feed_follows", apiCfg.middlewareAuth(apiCfg.handlerGetFeedFollows))
+	rV1.Delete("/feed_follows/{feedFollowID}", apiCfg.middlewareAuth(apiCfg.handlerDeleteFeedFollow))
+
 	srv := &http.Server{
 		Addr:    ":" + port,
 		Handler: r,
