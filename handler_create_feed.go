@@ -39,6 +39,7 @@ func (cfg *apiConfig) handlerCreateFeed(w http.ResponseWriter, r *http.Request, 
 	})
 	if err != nil {
 		respondWithError(w, 400, fmt.Sprint("Couldn't create feed: ", err))
+		return
 	}
 
 	feedfollow, err := cfg.DB.FollowFeed(r.Context(), database.FollowFeedParams{

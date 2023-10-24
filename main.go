@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/aduatgit/rss-feed-aggregator/internal/database"
 	"github.com/go-chi/chi/v5"
@@ -67,6 +68,8 @@ func main() {
 		Addr:    ":" + port,
 		Handler: r,
 	}
+
+	go apiCfg.workerFetchRssFeeds(10, time.Minute)
 
 	log.Printf("Serving on port %s\n", port)
 	log.Fatal(srv.ListenAndServe())
