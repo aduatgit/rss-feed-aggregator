@@ -2,14 +2,17 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"encoding/xml"
 	"io"
 	"log"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/aduatgit/rss-feed-aggregator/internal/database"
+	"github.com/google/uuid"
 )
 
 type RSSFeed struct {
@@ -78,7 +81,36 @@ func (cfg *apiConfig) scrapeFeed(wg *sync.WaitGroup, feed database.Feed) {
 		return
 	}
 	for _, item := range feedData.Channel.Item {
-		log.Println("Found post", item.Title)
+		t, err := time.Parse(time.RFC1123Z, item.PubDate)
+		if err != nil {
+			log.Printf("Couldn't parse publish date %v: %v", item.PubDate, err)
+			continue
+		}
+
+		desc := sql.NullString{}
+		if item.Description != "" {
+			desc.String = item.Description
+			desc.Valid = true
+		}
+
+		_, err = cfg.DB.CreatePost(context.Background(), database.CreatePostParams{
+			ID:          uuid.New(),
+			CreatedAt:   time.Now().UTC(),
+			UpdatedAt:   time.Now().UTC(),
+			Title:       item.Title,
+			Url:         item.Link,
+			Description: desc,
+			PublishedAt: t,
+			FeedID:      feed.ID,
+		})
+		if err != nil {
+			// This disables the message for duplicate values, e.g. if a post already exists in the database
+			if strings.Contains(err.Error(), "pq: duplicate key value violates unique constraint") {
+				continue
+			}
+			log.Printf("Couldn't create post %s: %v", item.Title, err)
+			continue
+		}
 	}
 	log.Printf("Feed %s collected, %v posts found", feed.Name, len(feedData.Channel.Item))
 }
